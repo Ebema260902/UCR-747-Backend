@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.database import get_db
 from app.models.games import Games
 from app.schemas.games import GamesCreate, GamesResponse
@@ -19,8 +20,35 @@ def create_game(game: GamesCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[GamesResponse])
-def get_games(db: Session = Depends(get_db)):
-    return db.query(Games).all()
+def get_games(
+    state: Optional[str] = Query(None, description="Filter by state"),
+    category_id: Optional[int] = Query(None, description="Filter by category ID"),
+    creator_id: Optional[int] = Query(None, description="Filter by creator ID"),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Games)
+    
+    if state is not None:
+        query = query.filter(Games.state == state)
+    if category_id is not None:
+        query = query.filter(Games.category_id == category_id)
+    if creator_id is not None:
+        query = query.filter(Games.creator_id == creator_id)
+    
+    return query.all()
+
+
+@router.get("/search", response_model=list[GamesResponse])
+def search_games(
+    q: str = Query(..., description="Search query"),
+    db: Session = Depends(get_db)
+):
+    """Search games by name and description using LIKE."""
+    query = db.query(Games).filter(
+        (Games.name_game.like(f"%{q}%")) |
+        (Games.description.like(f"%{q}%"))
+    )
+    return query.all()
 
 
 @router.get("/{game_id}", response_model=GamesResponse)

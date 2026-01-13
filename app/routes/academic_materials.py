@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.database import get_db
 from app.models.academic_material import AcademicMaterial
 from app.schemas.academic_material import AcademicMaterialCreate, AcademicMaterialResponse
@@ -19,8 +20,35 @@ def create_academic_material(material: AcademicMaterialCreate, db: Session = Dep
 
 
 @router.get("/", response_model=list[AcademicMaterialResponse])
-def get_academic_materials(db: Session = Depends(get_db)):
-    return db.query(AcademicMaterial).all()
+def get_academic_materials(
+    state: Optional[str] = Query(None, description="Filter by state"),
+    category_id: Optional[int] = Query(None, description="Filter by category ID"),
+    creator_id: Optional[int] = Query(None, description="Filter by creator ID"),
+    db: Session = Depends(get_db)
+):
+    query = db.query(AcademicMaterial)
+    
+    if state is not None:
+        query = query.filter(AcademicMaterial.state == state)
+    if category_id is not None:
+        query = query.filter(AcademicMaterial.category_id == category_id)
+    if creator_id is not None:
+        query = query.filter(AcademicMaterial.creator_id == creator_id)
+    
+    return query.all()
+
+
+@router.get("/search", response_model=list[AcademicMaterialResponse])
+def search_materials(
+    q: str = Query(..., description="Search query"),
+    db: Session = Depends(get_db)
+):
+    """Search academic materials by name and description using LIKE."""
+    query = db.query(AcademicMaterial).filter(
+        (AcademicMaterial.name_material.like(f"%{q}%")) |
+        (AcademicMaterial.description.like(f"%{q}%"))
+    )
+    return query.all()
 
 
 @router.get("/{material_id}", response_model=AcademicMaterialResponse)
