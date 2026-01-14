@@ -16,12 +16,14 @@ from app.models.category import Category
 
 app = FastAPI()
 
+# Configurar CORS primero
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 app.include_router(categories_router)
