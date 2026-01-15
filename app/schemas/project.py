@@ -1,6 +1,6 @@
 from pydantic import BaseModel
-from typing import Optional
-from datetime import date
+from typing import Optional, Union
+from datetime import date as DateType
 
 class ProjectBase(BaseModel):
     creator_id: int
@@ -8,7 +8,7 @@ class ProjectBase(BaseModel):
     name_project: str
     description: Optional[str] = None
     photo_project: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[DateType] = None
     file_id: Optional[str] = None
     state: Optional[str] = None
 
