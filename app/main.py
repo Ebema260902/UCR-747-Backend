@@ -9,6 +9,7 @@ from app.routes.creators import router as creators_router
 from app.routes.projects import router as projects_router
 from app.routes.academic_materials import router as academic_materials_router
 from app.routes.games import router as games_router
+from app.routes.admin import router as admin_router
 from app.models.project import Project
 from app.models.games import Games
 from app.models.academic_material import AcademicMaterial
@@ -46,6 +47,7 @@ app.include_router(creators_router)
 app.include_router(projects_router)
 app.include_router(academic_materials_router)
 app.include_router(games_router)
+app.include_router(admin_router)
 
 @app.get("/")
 def root():
