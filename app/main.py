@@ -1,8 +1,9 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.database import get_db
+from app.database import get_db, engine, Base
 from app.routes.categories import router as categories_router
 from app.routes.creators import router as creators_router
 from app.routes.projects import router as projects_router
@@ -14,13 +15,27 @@ from app.models.academic_material import AcademicMaterial
 from app.models.creator import Creator
 from app.models.category import Category
 
-app = FastAPI()
 
-# Configurar CORS primero
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Al iniciar: crear tablas y poblar con datos si la BD está vacía
+    Base.metadata.create_all(bind=engine)
+    try:
+        from scripts.seed_data import seed_data
+        seed_data()
+    except Exception as e:
+        print(f"Advertencia al hacer seed: {e}")
+    yield
+    # (aquí iría cleanup al apagar, si fuera necesario)
+
+
+app = FastAPI(lifespan=lifespan)
+
+# CORS: permite localhost en desarrollo y cualquier origen en producción (Vercel, etc.)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
